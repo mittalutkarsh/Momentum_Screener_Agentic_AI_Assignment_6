@@ -1,154 +1,223 @@
-# Momentum Stock Screener
+# Momentum Stock Screener with AI Analysis
 
-A Python-based stock screener that identifies momentum breakouts and stocks approaching new 52-week highs with volume confirmation, enhanced with AI analysis capabilities.
+A full-stack application that identifies momentum breakouts and stocks approaching new 52-week highs with volume confirmation, enhanced with AI analysis capabilities.
 
 ## Table of Contents
 
 - [Overview](#overview)  
 - [Key Features](#key-features)  
+- [Project Structure](#project-structure)  
 - [Core Algorithm](#core-algorithm)  
 - [LLM Integration](#llm-integration)  
-- [LLM Prompt System](#llm-prompt-system)  
-- [LLM Output Structure](#llm-output-structure)  
 - [Installation](#installation)  
 - [Configuration](#configuration)  
 - [Usage](#usage)  
-- [Custom Stock Lists](#custom-stock-lists)  
+- [API Reference](#api-reference)  
+- [Frontend Interface](#frontend-interface)  
 - [Performance Notes](#performance-notes)  
 - [License](#license)  
 - [Contributing](#contributing)  
 
 ## Overview
 
-This tool scans various stock universes (S&P 500, S&P 1500, Russell indices, etc.) to identify stocks that are breaking out to new highs with strong volume. It uses a momentum-based approach to find potential trading opportunities based on proximity to 52-week highs and volume surges.
+This application scans various stock universes (S&P 500, S&P 1500, Russell indices, etc.) to identify stocks that are breaking out to new highs with strong volume. It uses a momentum-based approach to find potential trading opportunities based on proximity to 52-week highs and volume surges, with AI-enhanced analysis.
 
 ## Key Features
 
-- Multiple stock universe options (S&P 500, S&P 1500, Russell 1000/3000, TSX, custom lists)  
-- Robust data downloading with retry mechanisms and batch processing  
-- Breakout detection based on proximity to 52-week highs and volume confirmation  
-- AI-enhanced analysis using Google's Gemini API  
-- Detailed statistics and verification of data quality  
-- Excel export of results  
+- **Multiple Stock Universes**: S&P 500, S&P 1500, Russell 1000/3000, TSX, custom lists
+- **Robust Data Handling**: Error-resilient data downloading with retry mechanisms and batch processing
+- **Technical Analysis Engine**: Breakout detection based on proximity to 52-week highs and volume confirmation
+- **AI-Enhanced Analysis**: Integration with Google's Gemini API for intelligent interpretation
+- **REST API**: Flask-based API server for integration with any frontend
+- **React Frontend**: Modern UI for interacting with the screener
+- **Detailed Reporting**: Excel export with comprehensive analysis
+
+## Project Structure
+
+```
+├── Finance_API/               # Backend Python code
+│   ├── agent/                 # Modular agent architecture
+│   │   ├── perception.py      # LLM analysis module
+│   │   ├── memory.py          # Data storage and retrieval
+│   │   ├── decision.py        # Technical analysis algorithms
+│   │   └── action.py          # Report generation
+│   ├── data_sources/          # Stock data providers
+│   │   ├── alphavantage.py    # Alpha Vantage integration
+│   │   ├── finnhub.py         # Finnhub integration
+│   │   └── iex.py             # IEX Cloud integration
+│   ├── momentum_screener_llm.py  # Main screener implementation
+│   ├── mcp_server.py          # Flask API server
+│   └── main.py                # CLI application entry point
+├── my-app/                    # React frontend
+│   ├── src/
+│   │   ├── components/        # React components
+│   │   ├── App.tsx            # Main application component
+│   │   └── mcp_client.ts      # API client functions
+└── requirements.txt           # Python dependencies
+```
 
 ## Core Algorithm
 
 1. **Average Volume Analysis**  
-   - Calculate 50-day average volume for each stock (\( \overline{V}_{50} \)).  
-   - Identify stocks with abnormally high current volume relative to their average.
+   - Calculate 50-day average volume for each stock
+   - Identify stocks with abnormally high current volume relative to their average
 
 2. **Rolling High Calculation**  
-   - Determine the 52-week (or custom lookback period) rolling high for each stock.  
-   - Focus on the highest price in the window to identify potential breakout levels.
+   - Determine the 52-week (or custom lookback period) rolling high for each stock
+   - Focus on the highest price in the window to identify potential breakout levels
 
 3. **Volume Ratio Calculation**  
-   - Compare today's volume \(V_{\text{today}}\) to the 50-day average volume \( \overline{V}_{50} \).  
-   - Higher ratios indicate stronger interest in the stock.
+   - Compare today's volume to the 50-day average volume
+   - Higher ratios indicate stronger interest in the stock
 
 4. **Proximity Calculation**  
-   - Measure how close each stock is to its 52-week high:  
-     \[
-       \text{Proximity} = \frac{\text{High}_{52\text{wk}} - \text{Price}_{\text{today}}}{\text{High}_{52\text{wk}}}
-     \]
-   - Smaller proximity values indicate the stock is closer to breaking out to new highs.
+   - Measure how close each stock is to its 52-week high
+   - Smaller proximity values indicate the stock is closer to breaking out to new highs
 
 5. **Breakout Classification**  
-   - **High Breakers**: Stocks within 5% of their 52-week high **and** showing volume surge > 1.2× average.  
-   - **Soft Breakouts**: Stocks within 5% of their 52-week high but without volume confirmation.
+   - **Breakouts**: Stocks within the specified percentage of their 52-week high **and** showing volume surge above threshold
+   - **Near Breakouts**: Stocks approaching their 52-week high but not yet breaking out or lacking volume confirmation
 
 ## LLM Integration
 
 The screener integrates Google's Gemini 2.0 Flash model for enhanced analysis of screening results.
 
-- **Model**: Google's Gemini 2.0 Flash  
-- **Implementation**: Uses the `google-generativeai` Python package  
-- **Authentication**: Requires a Gemini API key (stored in `.env` file)  
-
-### LLM Functionality
-
-The model performs several key functions:
-
-- Validates screening parameters  
-- Provides market context for the results  
-- Analyzes patterns across breakout stocks  
-- Offers suggestions for parameter refinements  
-- Identifies potential anomalies in the data  
-
-## LLM Prompt System
+### LLM Prompt Framework
 
 A structured system prompt guides the AI analysis through specific steps:
 
-[VALIDATE]  Check parameters: universe_choice, soft_breakout_pct, proximity_threshold, volume_threshold, lookback_days.
-[HYPOTHESIS] Explain your reasoning about what kind of stocks this screening should identify.
-[CALCULATION] Explain key calculations (rolling high, proximity, volume ratio) in plain language.
-[ANALYZE]  Interpret the results—what do the found breakouts indicate for trading?
-[VERIFY]   Sanity-check outputs and highlight any anomalies.
-[SUGGEST]  Recommend additional screening parameters that might improve results.
-
-## LLM Output Structure
-
-The output from the LLM is a JSON structure that contains the following fields:
-
-- **Analysis**: Detailed analysis of the screening results
-- **Recommendations**: Suggestions for improving the screening process
-- **Anomalies**: Identified anomalies in the data
+- **[VALIDATE]** Check parameters and input data quality
+- **[HYPOTHESIS]** Explain expected stock characteristics based on parameters
+- **[CALCULATION]** Explain key calculations in plain language
+- **[ANALYZE]** Interpret the results—what do the found breakouts indicate
+- **[VERIFY]** Sanity-check outputs and highlight anomalies
+- **[SUGGEST]** Recommend improvements to the screening process
 
 ## Installation
 
-To install the Momentum Stock Screener, follow these steps:
+### Backend Setup
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/momentum-stock-screener.git
+   git clone https://github.com/mittalutkarsh/Momentum_Screener_Agentic_AI_Assignment_6.git
+   cd Momentum_Screener_Agentic_AI_Assignment_6
    ```
-2. Navigate to the project directory:
+
+2. Create a virtual environment and install dependencies:
    ```
-   cd momentum-stock-screener
-   ```
-3. Create a virtual environment and activate it:
-   ```
-   python3 -m venv venv
+   python -m venv venv
    source venv/bin/activate  # For Linux/Mac
-   venv\Scripts\activate  # For Windows
-   ```
-4. Install the required packages:
-   ```
+   venv\Scripts\activate     # For Windows
    pip install -r requirements.txt
    ```
-5. Set up the environment variables:
-   - Create a `.env` file in the project root directory and add the following line:
-     ```
-     GEMINI_API_KEY=your_gemini_api_key
-     ```
+
+3. Set up environment variables:
+   Create a `.env` file in the Finance_API directory:
+   ```
+   GEMINI_API_KEY=your_gemini_api_key
+   FINNHUB_API_KEY=your_finnhub_api_key  # Optional
+   ALPHA_VANTAGE_API_KEY=your_av_api_key  # Optional
+   IEX_API_KEY=your_iex_api_key  # Optional
+   ```
+
+### Frontend Setup
+
+1. Navigate to the frontend directory:
+   ```
+   cd my-app
+   ```
+
+2. Install dependencies:
+   ```
+   npm install
+   ```
+
+3. Install Bootstrap (if not included in package.json):
+   ```
+   npm install react-bootstrap bootstrap
+   ```
 
 ## Configuration
 
-The configuration for the Momentum Stock Screener is stored in the `config.py` file. You can customize the following parameters:
+The application can be configured through environment variables and command-line parameters. Key configuration options:
 
-- **Stock Universe**: The list of stocks to be screened.
-- **Lookback Period**: The time period used to calculate the 52-week high.
-- **Proximity Threshold**: The percentage difference from the 52-week high to consider a stock as breaking out.
-- **Volume Threshold**: The volume ratio to consider a stock as breaking out.
+- **Stock Universe**: Choose from S&P 500, S&P 1500, Russell 1000/3000, TSX, or custom lists
+- **Breakout Parameters**: Customize proximity threshold, volume threshold, and lookback period
+- **Data Source**: Select from available data providers (Yahoo Finance, Finnhub, Alpha Vantage, IEX)
 
 ## Usage
 
-To use the Momentum Stock Screener, run the following command:
+### Running the Backend API
 
 ```
-python momentum_screener_llm.py
+cd Finance_API
+python mcp_server.py
 ```
 
-## Custom Stock Lists
+The server will start on http://localhost:5000 by default.
 
-You can specify custom stock lists in the `config.py` file. The format should be a list of stock symbols.
+### Running the Frontend
+
+```
+cd my-app
+npm start
+```
+
+The frontend will be available at http://localhost:3000.
+
+### Using the CLI Directly
+
+```
+cd Finance_API
+python main.py
+```
+
+This will launch the CLI interface for the stock analyzer.
+
+## API Reference
+
+### Main Endpoints
+
+- `GET /api/status` - Check which screener modes are available
+- `GET /api/universes` - Get available stock universes
+- `POST /api/screener/full` - Run the full screener with LLM analysis
+- `POST /api/screener/quick` - Run a faster version without LLM analysis
+- `POST /api/screener/agent` - Run the agent-based stock analysis
+- `GET /api/test/data` - Get sample test data for frontend development
+
+### Request Format
+
+Example request to `/api/screener/full`:
+
+```json
+{
+  "universe_choice": 0,
+  "soft_breakout_pct": 0.005,
+  "proximity_threshold": 0.05,
+  "volume_threshold": 1.2,
+  "lookback_days": 365,
+  "use_llm": true
+}
+```
+
+## Frontend Interface
+
+The React frontend provides an intuitive interface for interacting with the momentum screener:
+
+- **Form Component**: Configure screening parameters
+- **Results Component**: View breakouts and near-breakouts with key statistics
+- **Analysis Panel**: Read the AI-enhanced analysis and suggestions
 
 ## Performance Notes
 
-The Momentum Stock Screener is designed to be efficient and scalable. It can handle large datasets and provides detailed statistics and verification of data quality.
+- Data downloading is batched to avoid timeouts and rate limits
+- Browser fingerprinting is used for Yahoo Finance to improve reliability
+- The system handles missing data gracefully
+- For large universes, consider using the "quick" mode without LLM analysis
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+This project is licensed under the MIT License.
 
 ## Contributing
 
