@@ -1,0 +1,49 @@
+{
+  "breakouts": [
+    {
+      "Symbol": "GOOGL",
+      "Price": 389.5,
+      "52_Week_High": 394.2,
+      "Distance_to_High_pct": 1.19,
+      "Volume_Ratio": 1.15
+    },
+    {
+      "Symbol": "META",
+      "Price": 189.34,
+      "52_Week_High": 190.98,
+      "Distance_to_High_pct": 0.86,
+      "Volume_Ratio": 1.09
+    }
+  ],
+  "near_breakouts": [
+    {
+      "Symbol": "AAPL",
+      "Price": 174.65,
+      "52_Week_High": 177.43,
+      "Distance_to_High_pct": 1.56,
+      "Volume_Ratio": 0.85
+    },
+    {
+      "Symbol": "MSFT",
+      "Price": 222.55,
+      "52_Week_High": 223.03,
+      "Distance_to_High_pct": 0.21,
+      "Volume_Ratio": 0.72
+    },
+    {
+      "Symbol": "AMZN",
+      "Price": 505.21,
+      "52_Week_High": 508.23,
+      "Distance_to_High_pct": 0.6,
+      "Volume_Ratio": 0.88
+    }
+  ],
+  "excel_path": "outputs/TEST_Momentum_Screener_2025-05-08.xlsx",
+  "parameters": {
+    "universe": "Test Data",
+    "soft_breakout_pct": 0.02,
+    "proximity_threshold": 0.1,
+    "volume_threshold": 1.0,
+    "lookback_days": 90
+  }
+}
